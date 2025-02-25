@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Surah</title>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .ayat {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            background: linear-gradient(to right, #f9f9f9, #e9ecef);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .ayat:hover {
+            background: linear-gradient(to right, #eaeaea, #dee2e6);
+            transform: scale(1.02);
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .text-arab {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: right;
+            direction: rtl;
+            color: #363434;
+        }
+        .btn-back {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .btn-back:hover {
+            background-color: #0056b3;
+        }
+        h1 {
+            color: #007bff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <button onclick="history.back()" class="btn btn-back mb-3">Kembali</button>
+        <h1 class="text-center" id="judul-surah"></h1>
+        <p class="text-center" id="arti-surah"></p>
+        <p class="text-center font-italic" id="deskripsi-surah"></p>
+        <div id="ayat-list"></div>
+    </div>
+
+    <script>
+        function toArabicNumber(num) {
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return num.toString().split('').map(digit => arabicNumbers[digit]).join('');
+        }
+
+        $(document).ready(function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idSurah = urlParams.get('id');
+
+            if (!idSurah) {
+                $('#ayat-list').html('<p class="text-center text-danger">ID Surah tidak ditemukan!</p>');
+                return;
+            }
+
+            $.ajax({
+                type: 'GET',
+                url: `https://equran.id/api/v2/surat/${idSurah}`,
+                success: function (response) {
+                    let surah = response.data;
+
+                    $('#judul-surah').html(`${surah.nomor}. ${surah.namaLatin} <span class="text-arab">(${surah.nama})</span>`);
+                    $('#arti-surah').html(`<strong>Arti:</strong> ${surah.arti} | <strong>Jumlah Ayat:</strong> ${surah.jumlahAyat}`);
+                    $('#deskripsi-surah').html(surah.deskripsi ? `<p>${surah.deskripsi}</p>` : `<p><i>Deskripsi tidak tersedia</i></p>`);
+
+                    let ayatHTML = "";
+                    surah.ayat.forEach(ayat => {
+                        let arabicAyatNumber = toArabicNumber(ayat.nomorAyat);
+                        ayatHTML += `
+                            <div class="ayat">
+                                <p class="text-arab"> ${ayat.teksArab} <span>(${arabicAyatNumber})</span></p>
+                                <p><strong> Artinya : </strong> ${ayat.teksIndonesia}</p>
+                            </div>
+                        `;
+                    });
+                    $('#ayat-list').html(ayatHTML);
+                },
+                error: function () {
+                    $('#ayat-list').html('<p class="text-center text-danger">Gagal mengambil data surah. Silakan coba lagi.</p>');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
